@@ -20,24 +20,26 @@ int main()
     // создание буфера и массива указателей
     char* buffer = 0;
     char** index_array = 0;
-    int nlines = ReadFromFile(origin_file, &index_array, &buffer);
-    if (nlines = -1)
+    int lines_count = ReadFromFile(origin_file, &index_array, &buffer);
+    if (lines_count == -1)
     {
         printf("Something went wrong...\n");
-        abort();
+        free(buffer);
+        free(index_array);
+        return 0;
     }
 
     // сортировка слева направо
-    BubbleSort (index_array, nlines, DirectCmp);
-    PrintInFile(direct_file, index_array, nlines);
+    BubbleSort (index_array, lines_count, DirectCmp);
+    PrintInFile(direct_file, index_array, lines_count);
 
     // сортировка справа налево
-    BubbleSort (index_array, nlines, ReverseCmp);
-    PrintInFile(reversed_file, index_array, nlines);
+    BubbleSort (index_array, lines_count, ReverseCmp);
+    PrintInFile(reversed_file, index_array, lines_count);
 
     // оригинальный текст
-    BubbleSort (index_array, nlines, PointersCmp);
-    PrintInFile(copy_file, index_array, nlines);
+    BubbleSort (index_array, lines_count, PointersCmp);
+    PrintInFile(copy_file, index_array, lines_count);
 
     free(buffer);
     free(index_array);

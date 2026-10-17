@@ -11,74 +11,79 @@
 int ReadFromFile(const char* name, char*** index_array, char** buffer)
 {
     // запись размера файла
-    struct stat st;
-    FILE* file;
-    stat(name, &st);
-    size_t size = st.st_size;
-    assert(size != 0);
-    // создание буфера
+    size_t size = GetSize(name);
+    // открытие файла
+    FILE* file = fopen(name, "r");
+    if (file == 0)
+    {
+        printf("Error: calloc returned 0 in file: %d in line %d", __FILE__, __LINE__);
+        return -1;
+    }
+    // создание буфера и массива с указателями
     *buffer = (char*)calloc(size + 1, sizeof(char));
     if (*buffer == 0)
     {
-
-        // printf("Error: calloc returned 0 in file: %d in line %d",
-        // __FILE__, __LINE__);
-        // abort();
-    }
-
-    // открытие файла и заполнение буфера
-    file = fopen(name, "r");
-    if (file == 0)
-    {
-        printf("Error: calloc returned 0 in file: %d in line %d",
-        __FILE__, __LINE__);
+        printf("Error: calloc returned 0 in file: %d in line %d", __FILE__, __LINE__);
         return -1;
     }
+    // заполнение буфера
     fread(*buffer, sizeof(char), size, file);
-
     // подсчет строк в файле
-    // СДЕЛАТЬ НОВУЮ ФУЦНКИЮ!!!
+    int lines_count = CountLines(buffer, size);
+    *index_array = (char**)calloc(lines_count + 1, sizeof(char*));
+    if (*index_array == 0)
+    {
+        printf("Error: calloc returned 0 in file: %d in line %d", __FILE__, __LINE__);
+        return -1;
+    }
+    // заполнение массива с указателями
+    FillIndexArray(index_array, buffer, size);
+    // закрытие файла
+    fclose(file);
+    return lines_count;
+}
+
+size_t GetSize(const char* name)
+{
+    struct stat st;
+    stat(name, &st);
+    return st.st_size;
+}
+
+int CountLines(char** buffer, size_t size)
+{
     char sym = 0;
     int line_count = 0;
     for (long long buf_idx = 0; buf_idx < size; buf_idx++)
     {
-        sym = (*buffer)[buf_idx];
+        sym = *(*buffer + buf_idx);
         assert(sym != '\r');
         if (sym == '\n')
         {
             line_count++;
-            (*buffer)[buf_idx] = '\0';
+            *(*buffer + buf_idx) = '\0';
         }
     }
+    return line_count;
+}
 
-    // создание массива указателей
-    *index_array = (char**)calloc(line_count + 1, sizeof(char*));
-    if (*index_array == 0)
-    {
-        printf("Error: calloc returned 0 in file: %d in line %d",
-        __FILE__, __LINE__);
-        abort();
-
-    }
-    char** array = *index_array
-    // заполнение массива указателей
-
-    array[0] = *buffer;
+void FillIndexArray(char*** index_array, char** buffer, size_t size)
+{
+    char sym = 0;
+    (*index_array)[0] = *buffer;
     int line_idx = 1;
     for (long long buf_idx = 1; buf_idx < size; buf_idx++)
     {
-        sym = (*buffer)[buf_idx];
+        sym = *(*buffer + buf_idx);
+
         if (sym == '\0')
         {
-            array[line_idx] = (*buffer) + buf_idx + 1;
+            (*index_array)[line_idx] = *buffer + buf_idx + 1;
             line_idx++;
         }
     }
-
-    // закрытие файла
-    fclose(file);
-    return line_count;
 }
+
 
 void PrintInFile(const char* name, char** index_array, int nlines)
 {
